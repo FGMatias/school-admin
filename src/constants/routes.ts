@@ -1,0 +1,27 @@
+export const ROUTES = {
+  LOGIN: '/login',
+  EMPRESA: {
+    DASHBOARD: '/empresa',
+    SUCURSAL: '/empresa/sucursal',
+    PERIODO: '/empresa/periodo',
+    GRADO: '/empresa/grado',
+    PROFESOR: '/empresa/profesor',
+    TARIFA: '/empresa/tarifa',
+    PAGO: '/empresa/pago',
+    REPORTE_ALUMNO: '/empresa/reporte/alumno',
+    REPORTE_PAGO_ALUMNO: '/empresa/reporte/pago-alumno',
+    REPORTE_PAGO_PROFESOR: '/empresa/reporte/pago-profesor',
+    REPORTE_MATRICULA: '/empresa/reporte/matricula',
+    LICENCIA: '/empresa/licencia',
+  },
+  SUCURSAL: {
+    DASHBOARD: '/sucursal',
+    ALUMNO: '/sucursal/alumno',
+    ALUMNO_DETALLE: '/sucursal/alumno/:id',
+    PAGO: '/sucursal/pago',
+    MATRICULA: '/sucursal/matricula',
+    REPORTE_ALUMNO: '/sucursal/reporte/alumno',
+    REPORTE_PAGO: '/sucursal/reporte/pago',
+    REPORTE_MATRICULA: '/sucursal/reporte/matricula',
+  },
+} as const
