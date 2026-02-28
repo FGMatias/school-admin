@@ -1,11 +1,12 @@
 import type { RolUsuario } from '@/constants/roles'
 
 export interface Usuario {
-  id: number
+  id: string
   id_auth: string
   id_rol: number
   id_colegio: number
   nombre: string
+  apellido: string
   estado: boolean
   created_at: string
   rol: {
