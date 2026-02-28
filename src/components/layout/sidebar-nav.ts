@@ -72,7 +72,7 @@ export const routeTitles: Record<string, string> = {
   [ROUTES.EMPRESA.PROFESOR]: 'Profesores',
   [ROUTES.EMPRESA.PAGO]: 'Pagos',
   [ROUTES.EMPRESA.TARIFA]: 'Tarifas',
-  [ROUTES.EMPRESA.REPORTE_ALUMNO]: 'Reporte de Al',
+  [ROUTES.EMPRESA.REPORTE_ALUMNO]: 'Reporte de Alumnos',
   [ROUTES.EMPRESA.REPORTE_PAGO_ALUMNO]: 'Reporte de Pagos - Alumnos',
   [ROUTES.EMPRESA.REPORTE_PAGO_PROFESOR]: 'Reporte de Pagos - Profesores',
   [ROUTES.EMPRESA.REPORTE_MATRICULA]: 'Reporte de Matrículas',

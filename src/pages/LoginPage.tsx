@@ -7,7 +7,7 @@ import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
 import { BarChart3, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -16,7 +16,6 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, usuario } = useAuth()
-  const navigate = useNavigate()
 
   if (usuario) {
     console.log({ usuario })
@@ -24,7 +23,7 @@ export function LoginPage() {
       usuario.rol.nombre === ROLES.ADMIN_EMPRESA
         ? ROUTES.EMPRESA.DASHBOARD
         : ROUTES.SUCURSAL.DASHBOARD
-    navigate(to, { replace: true })
+    return <Navigate to={to} replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

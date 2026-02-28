@@ -1,3 +1,4 @@
+import { AppLayout } from '@/components/layout/AppLayout'
 import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,39 +26,43 @@ export function AppRouter() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<RoleRoute allowedRole={ROLES.ADMIN_EMPRESA} />}>
-            <Route path={ROUTES.EMPRESA.DASHBOARD} element={<DashboardEmpresaPage />} />
-            <Route path={ROUTES.EMPRESA.SUCURSAL} element={<Placeholder titulo="Sucursales" />} />
-            <Route
-              path={ROUTES.EMPRESA.PERIODO}
-              element={<Placeholder titulo="Periodos Académicos" />}
-            />
-            <Route path={ROUTES.EMPRESA.GRADO} element={<Placeholder titulo="Grados" />} />
-            <Route path={ROUTES.EMPRESA.PROFESOR} element={<Placeholder titulo="Profesores" />} />
-            <Route path={ROUTES.EMPRESA.PAGO} element={<Placeholder titulo="Pagos" />} />
-            <Route path={ROUTES.EMPRESA.TARIFA} element={<Placeholder titulo="Tarifas" />} />
-            <Route
-              path={ROUTES.EMPRESA.REPORTE_ALUMNO}
-              element={<Placeholder titulo="Reporte de Alumnos" />}
-            />
-            <Route
-              path={ROUTES.EMPRESA.REPORTE_PAGO_ALUMNO}
-              element={<Placeholder titulo="Reporte de Pagos - Alumnos" />}
-            />
-            <Route
-              path={ROUTES.EMPRESA.REPORTE_PAGO_PROFESOR}
-              element={<Placeholder titulo="Reporte de Pagos - Profesores" />}
-            />
-            <Route
-              path={ROUTES.EMPRESA.REPORTE_MATRICULA}
-              element={<Placeholder titulo="Reporte de Matrícula" />}
-            />
-            <Route path={ROUTES.EMPRESA.LICENCIA} element={<Placeholder titulo="Licencia" />} />
+            <Route element={<AppLayout />}>
+              <Route path={ROUTES.EMPRESA.DASHBOARD} element={<DashboardEmpresaPage />} />
+              <Route path={ROUTES.EMPRESA.SUCURSAL} element={<Placeholder titulo="Sucursales" />} />
+              <Route
+                path={ROUTES.EMPRESA.PERIODO}
+                element={<Placeholder titulo="Periodos Académicos" />}
+              />
+              <Route path={ROUTES.EMPRESA.GRADO} element={<Placeholder titulo="Grados" />} />
+              <Route path={ROUTES.EMPRESA.PROFESOR} element={<Placeholder titulo="Profesores" />} />
+              <Route path={ROUTES.EMPRESA.PAGO} element={<Placeholder titulo="Pagos" />} />
+              <Route path={ROUTES.EMPRESA.TARIFA} element={<Placeholder titulo="Tarifas" />} />
+              <Route
+                path={ROUTES.EMPRESA.REPORTE_ALUMNO}
+                element={<Placeholder titulo="Reporte de Alumnos" />}
+              />
+              <Route
+                path={ROUTES.EMPRESA.REPORTE_PAGO_ALUMNO}
+                element={<Placeholder titulo="Reporte de Pagos - Alumnos" />}
+              />
+              <Route
+                path={ROUTES.EMPRESA.REPORTE_PAGO_PROFESOR}
+                element={<Placeholder titulo="Reporte de Pagos - Profesores" />}
+              />
+              <Route
+                path={ROUTES.EMPRESA.REPORTE_MATRICULA}
+                element={<Placeholder titulo="Reporte de Matrícula" />}
+              />
+              <Route path={ROUTES.EMPRESA.LICENCIA} element={<Placeholder titulo="Licencia" />} />
+            </Route>
           </Route>
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<RoleRoute allowedRole={ROLES.ADMIN_SUCURSAL} />}>
-            <Route path={ROUTES.SUCURSAL.DASHBOARD} element={<DashboardSucursalPage />} />
+            <Route element={<AppLayout />}>
+              <Route path={ROUTES.SUCURSAL.DASHBOARD} element={<DashboardSucursalPage />} />
+            </Route>
           </Route>
         </Route>
 

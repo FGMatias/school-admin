@@ -1,7 +1,7 @@
 import { AuthContext } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import type { Usuario } from '@/types'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -11,29 +11,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const initializeRef = useRef(false)
 
-  const fetchUsuario = async (authId: string) => {
+  const fetchUsuario = async (authId: string): Promise<Usuario> => {
     const { data, error } = await supabase
       .from('usuario')
       .select(
         `
-                *,
-                rol (*),
-                colegio (*),
-                usuario_sucursal (
-                    id_sucursal,
-                    sucursal (id, nombre)
-                )
-                `,
+        *,
+        rol (*),
+        colegio (*),
+        usuario_sucursal (
+            id_sucursal,
+            sucursal (id, nombre)
+        )
+        `,
       )
       .eq('id_auth', authId)
       .single()
 
     if (error) throw error
+
+    if (!data) throw new Error(`No se encontró usuario para id_auth: ${authId}`)
+
     return data as Usuario
   }
 
   useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!initializeRef.current) return
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const usuario = await fetchUsuario(session.user.id)
+          setUsuario(usuario)
+        } catch {
+          setError('Error al cargar usuario')
+        }
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setUsuario(null)
+        setError(null)
+      }
+    })
+
     const initAuth = async () => {
       try {
         const {
@@ -44,33 +68,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const usuario = await fetchUsuario(session.user.id)
           setUsuario(usuario)
         }
-      } catch (err) {
+      } catch {
         setError('Error al cargar la sesión')
-        console.error(err)
+
+        try {
+          await supabase.auth.signOut()
+        } catch {}
       } finally {
         setLoading(false)
+        initializeRef.current = true
       }
     }
 
     initAuth()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const usuario = await fetchUsuario(session.user.id)
-          setUsuario(usuario)
-        } catch (err) {
-          setError('Error al cargar usuario')
-          console.error(err)
-        }
-      }
-
-      if (event === 'SIGNED_OUT') {
-        setUsuario(null)
-      }
-    })
 
     return () => subscription.unsubscribe()
   }, [])
