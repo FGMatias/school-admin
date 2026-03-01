@@ -3,6 +3,7 @@ import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
 import { DashboardEmpresaPage } from '@/pages/empresa/DashboardPage'
+import SucursalPage from '@/pages/empresa/SucursalPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardSucursalPage } from '@/pages/sucursal/DashboardPage'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -28,7 +29,7 @@ export function AppRouter() {
           <Route element={<RoleRoute allowedRole={ROLES.ADMIN_EMPRESA} />}>
             <Route element={<AppLayout />}>
               <Route path={ROUTES.EMPRESA.DASHBOARD} element={<DashboardEmpresaPage />} />
-              <Route path={ROUTES.EMPRESA.SUCURSAL} element={<Placeholder titulo="Sucursales" />} />
+              <Route path={ROUTES.EMPRESA.SUCURSAL} element={<SucursalPage />} />
               <Route
                 path={ROUTES.EMPRESA.PERIODO}
                 element={<Placeholder titulo="Periodos Académicos" />}
