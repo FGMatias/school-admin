@@ -4,7 +4,7 @@ import type {
   Sucursal,
   SucursalConAdmin,
   SucursalFormValues,
-  UsuarioDisponible,
+  AsignarAdminFormValues,
 } from '@/types/sucursal.types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -27,21 +27,23 @@ export function useSucursal() {
       })
 
       if (error) throw error
+      if (!data) return []
 
-      return (data ?? []).map((row: any) => ({
-        id: row.id,
-        id_colegio: row.id_colegio,
-        nombre: row.nombre,
-        direccion: row.direccion,
-        estado: row.estado,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
+      return data.map((row: Record<string, unknown>) => ({
+        id: row.id as number,
+        id_colegio: row.id_colegio as number,
+        nombre: row.nombre as string,
+        direccion: row.direccion as string,
+        estado: row.estado as boolean,
+        created_at: row.created_at as string,
+        updated_at: row.updated_at as string,
         administrador: row.admin_id
           ? {
-              id: row.admin_id,
-              nombre: row.admin_nombre,
-              apellido: row.admin_apellido,
-              estado: row.admin_estado,
+              id: row.admin_id as string,
+              nombre: row.admin_nombre as string,
+              apellido: row.admin_apellido as string,
+              estado: row.admin_estado as boolean,
+              correo: (row.admin_correo as string) ?? null,
             }
           : null,
       }))
@@ -118,59 +120,42 @@ export function useToggleEstadoSucursal() {
   })
 }
 
-export function useAdminsDisponibles() {
+export function useCrearAdminSucursal() {
   const { usuario } = useAuth()
-  const idColegio = usuario?.id_colegio ?? 0
-
-  return useQuery({
-    queryKey: KEYS.adminsDisponibles(idColegio),
-    queryFn: async (): Promise<UsuarioDisponible[]> => {
-      const { data, error } = await supabase
-        .from('usuario')
-        .select(
-          `
-                id,
-                nombre,
-                apellido,
-                estado,
-                rol:id_rol (
-                    nombre
-                )    
-            `,
-        )
-        .eq('id_colegio', idColegio)
-        .eq('estado', true)
-
-      if (error) throw error
-
-      return (data ?? [])
-        .filter((u: any) => u.rol?.nombre === 'ADMIN_SUCURSAL')
-        .map((u: any) => ({
-          id: u.id,
-          nombre: u.nombre,
-          apellido: u.apellido,
-          estado: u.estado,
-          rol: { nombre: u.rol.nombre },
-        }))
-    },
-    enabled: idColegio > 0,
-  })
-}
-
-export function useAsignarAdmin() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ idSucursal, idUsuario }: { idSucursal: number; idUsuario: string }) => {
-      const { error } = await supabase.rpc('asignar_admin_sucursal', {
+    mutationFn: async ({
+      idSucursal,
+      values,
+    }: {
+      idSucursal: number
+      values: AsignarAdminFormValues
+    }) => {
+      const { error } = await supabase.rpc('crear_admin_sucursal', {
         p_id_sucursal: idSucursal,
-        p_id_usuario: idUsuario,
+        p_id_colegio: usuario!.id_colegio,
+        p_nombre: values.nombre.trim(),
+        p_apellido: values.apellido.trim(),
+        p_correo: values.correo.trim().toLowerCase(),
       })
 
       if (error) throw error
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.all })
+      qc.invalidateQueries({queryKey: KEYS.all})
+    }
+  })
+}
+
+export function useResetPasswordAdmin() {
+  return useMutation({
+    mutationFn: async (idUsuario: string) => {
+      const { error } = await supabase.rpc('reset_password_admin', {
+        p_id_usuario: idUsuario,
+      })
+
+      if (error) throw error
     },
   })
 }

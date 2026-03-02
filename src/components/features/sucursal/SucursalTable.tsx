@@ -1,6 +1,7 @@
+import { DataTable } from '@/components/shared/DataTable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,23 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import type { SucursalConAdmin, SucursalFiltros } from '@/types/sucursal.types'
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type ColumnDef,
-} from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import {
   Download,
   Eye,
@@ -56,8 +42,6 @@ interface SucursalTableProps {
   onVerDetalle: (sucursal: SucursalConAdmin) => void
 }
 
-const PAGE_SIZE = 5
-
 export function SucursalTable({
   data,
   onEditar,
@@ -69,7 +53,6 @@ export function SucursalTable({
     busqueda: '',
     estado: 'todos',
   })
-
   const [filtrosAplicados, setFiltrosAplicados] = useState<SucursalFiltros>({
     busqueda: '',
     estado: 'todos',
@@ -84,7 +67,6 @@ export function SucursalTable({
           (s.direccion?.toLowerCase().includes(termino) ?? false) ||
           (s.administrador &&
             `${s.administrador.nombre} ${s.administrador.apellido}`.toLowerCase().includes(termino))
-
         if (!coincide) return false
       }
 
@@ -95,23 +77,23 @@ export function SucursalTable({
     })
   }, [data, filtrosAplicados])
 
-  const columns = useMemo<ColumnDef<SucursalConAdmin>[]>(
+  const columns = useMemo<ColumnDef<SucursalConAdmin, unknown>[]>(
     () => [
       {
         accessorKey: 'nombre',
         header: 'Nombre',
-        cell: ({ row }) => {
-          ;<div>
+        cell: ({ row }) => (
+          <div>
             <p className="font-medium">{row.original.nombre}</p>
             {row.original.direccion && (
               <p className="text-xs text-muted-foreground line-clamp-1">{row.original.direccion}</p>
             )}
           </div>
-        },
+        ),
       },
       {
         accessorKey: 'direccion',
-        header: 'Direccion',
+        header: 'Dirección',
         cell: ({ row }) =>
           row.original.direccion ? (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -119,7 +101,7 @@ export function SucursalTable({
               <span className="line-clamp-1">{row.original.direccion}</span>
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">-</span>
+            <span className="text-sm text-muted-foreground">—</span>
           ),
       },
       {
@@ -128,15 +110,13 @@ export function SucursalTable({
         cell: ({ row }) => {
           const admin = row.original.administrador
           if (!admin) {
-            return <span className="text-sm text-muted-foreground italic">Sin Asignar</span>
+            return <span className="text-sm text-muted-foreground italic">Sin asignar</span>
           }
-
-          const iniciales = `${admin.nombre.charAt(0)}${admin.apellido.charAt(0)}`
-
           return (
             <div className="flex items-center gap-2">
               <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                {iniciales}
+                {admin.nombre.charAt(0)}
+                {admin.apellido.charAt(0)}
               </div>
               <span className="text-sm">
                 {admin.nombre} {admin.apellido}
@@ -151,7 +131,9 @@ export function SucursalTable({
         cell: ({ row }) => (
           <Badge variant={row.original.estado ? 'default' : 'secondary'}>
             <span
-              className={`mr-1.5 inline-block size-1.5 rounded-full ${row.original.estado ? 'bg-emerald-400' : 'bg-gray-400'}`}
+              className={`mr-1.5 inline-block size-1.5 rounded-full ${
+                row.original.estado ? 'bg-emerald-400' : 'bg-gray-400'
+              }`}
             />
             {row.original.estado ? 'Activa' : 'Inactiva'}
           </Badge>
@@ -206,17 +188,6 @@ export function SucursalTable({
     [onEditar, onToggleEstado, onAsignarAdmin, onVerDetalle],
   )
 
-  const table = useReactTable({
-    data: datosFiltrados,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: { pageIndex: PAGE_SIZE },
-    },
-  })
-
   const aplicarFiltros = () => setFiltrosAplicados({ ...filtros })
 
   const limpiarFiltros = () => {
@@ -226,12 +197,6 @@ export function SucursalTable({
   }
 
   const hayFiltrosActivos = filtrosAplicados.busqueda !== '' || filtrosAplicados.estado !== 'todos'
-
-  const paginaActual = table.getState().pagination.pageIndex
-  const totalPaginas = table.getPageCount()
-  const totalRegistros = datosFiltrados.length
-  const desde = paginaActual * PAGE_SIZE + 1
-  const hasta = Math.min((paginaActual + 1) * PAGE_SIZE, totalRegistros)
 
   return (
     <div className="space-y-6">
@@ -286,90 +251,27 @@ export function SucursalTable({
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
+        <CardHeader>
           <CardTitle className="text-lg">Lista de Sedes</CardTitle>
-          <Button variant="outline" size="icon" className="size-8">
-            <Download className="size-4" />
-            <span className="sr-only">Exportar</span>
-          </Button>
+          <CardAction>
+            <Button variant="outline" size="icon" className="size-8">
+              <Download className="size-4" />
+              <span className="sr-only">Exportar</span>
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent className="px-0 pb-0">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id}>
-                  {hg.headers.map((header) => (
-                    <TableHead key={header.id} className="px-6">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-6">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {hayFiltrosActivos
-                      ? 'No se encontraron resultados con los filtros aplicados.'
-                      : 'No hay sucursales registradas.'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {totalRegistros > 0 && (
-            <div className="flex items-center justify-between border-t px-6 py-4">
-              <p className="text-sm text-muted-foreground">
-                Mostrando {desde} a {hasta} de {totalRegistros} sucursales
-              </p>
-
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Anterior
-                </Button>
-
-                {Array.from({ length: totalPaginas }, (_, i) => (
-                  <Button
-                    key={i}
-                    variant={paginaActual === i ? 'default' : 'outline'}
-                    size="sm"
-                    className="size-8 p-0"
-                    onClick={() => table.setPageIndex(i)}
-                  >
-                    {i + 1}
-                  </Button>
-                ))}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={datosFiltrados}
+            pageSize={5}
+            entityName="sucursales"
+            emptyMessage={
+              hayFiltrosActivos
+                ? 'No se encontraron resultados con los filtros aplicados.'
+                : 'No hay sucursales registradas.'
+            }
+          />
         </CardContent>
       </Card>
     </div>

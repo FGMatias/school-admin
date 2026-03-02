@@ -2,159 +2,118 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useAdminsDisponibles, useAsignarAdmin, useQuitarAdmin } from '@/hooks/queries/useSucursal'
-import type { SucursalConAdmin } from '@/types/sucursal.types'
-import { Loader2, UserPlus, UserX } from 'lucide-react'
-import { useState } from 'react'
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { asignarAdminSchema, type AsignarAdminFormValues } from '@/schemas/sucursal.schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 
 interface AsignarAdminModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  sucursal: SucursalConAdmin | null
+  onSubmit: (values: AsignarAdminFormValues) => void
+  isPending: boolean
 }
 
-export function AsignarAdminModal({ open, onOpenChange, sucursal }: AsignarAdminModalProps) {
-  const [selectedUserId, setSelectedUserId] = useState<string>('')
-  const { data: adminsDisponibles = [], isLoading: loadingAdmins } = useAdminsDisponibles()
-  const asignarAdmin = useAsignarAdmin()
-  const quitadAdmin = useQuitarAdmin()
-  const adminActual = sucursal?.administrador
-  const isPending = asignarAdmin.isPending || quitadAdmin.isPending
+export function AsignarAdminModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  isPending,
+}: AsignarAdminModalProps) {
+  const form = useForm<AsignarAdminFormValues>({
+    resolver: zodResolver(asignarAdminSchema),
+    defaultValues: {
+      nombre: '',
+      apellido: '',
+      correo: '',
+    },
+  })
 
-  const handleAsignar = async () => {
-    if (!sucursal || !selectedUserId) return
-
-    await asignarAdmin.mutateAsync({
-      idSucursal: sucursal.id,
-      idUsuario: selectedUserId,
-    })
-
-    setSelectedUserId('')
-    onOpenChange(false)
-  }
-
-  const handleQuitar = async () => {
-    if (!sucursal) return
-
-    await quitadAdmin.mutateAsync(sucursal.id)
-    onOpenChange(false)
-  }
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) setSelectedUserId('')
-    onOpenChange(isOpen)
-  }
+  useEffect(() => {
+    if (open) form.reset()
+  }, [open, form])
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Administrador de Sucursal</DialogTitle>
-          <DialogDescription>
-            {sucursal
-              ? `Gestion el administrador de "${sucursal.nombre}",`
-              : 'Seleccione una sucursal.'}
-          </DialogDescription>
+          <DialogTitle>Asignar Administrador</DialogTitle>
         </DialogHeader>
 
-        {sucursal && (
-          <div className="space-y-4">
-            {adminActual ? (
-              <div className="rounded-lg border p-4">
-                <p className="text-sm font-medium text-muted-foreground">Administrador actual</p>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                      {adminActual.nombre.charAt(0)}
-                      {adminActual.apellido.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {adminActual.nombre} {adminActual.apellido}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Administrador Sucursal</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={handleQuitar}
-                    disabled={isPending}
-                  >
-                    {quitadAdmin.isPending ? (
-                      <Loader2 className="mr-1 size-4 animate-spin" />
-                    ) : (
-                      <UserX className="mr-1 size-4" />
-                    )}
-                    Quitar
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-                No hay administrador asignado
-              </div>
-            )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="nombre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej. Juan" autoFocus {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium">
-                {adminActual ? 'Reemplazar con' : 'Asignar Administrador'}
-              </p>
-              <Select
-                value={selectedUserId}
-                onValueChange={setSelectedUserId}
-                disabled={loadingAdmins}
+            <FormField
+              control={form.control}
+              name="apellido"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apellido</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej. Pérez" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="correo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Correo Electrónico</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="Ej. juan.perez@ejemplo.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isPending}
               >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      loadingAdmins ? 'Cargando usuarios...' : 'Seleccionar administrador'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {adminsDisponibles
-                    .filter((u) => u.id !== adminActual?.id)
-                    .map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.nombre} {u.apellido}
-                      </SelectItem>
-                    ))}
-
-                  {adminsDisponibles.filter((u) => u.id !== adminActual?.id).length === 0 && (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      No hay administradores disponibles
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter className="pt-2">
-          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button onClick={handleAsignar} disabled={!selectedUserId || isPending}>
-            {asignarAdmin.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            <UserPlus className="mr-2 size-4" />
-            Asignar
-          </Button>
-        </DialogFooter>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Asignar
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

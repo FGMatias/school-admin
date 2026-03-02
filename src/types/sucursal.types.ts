@@ -12,6 +12,7 @@ export interface AdminSucursal {
   id: string
   nombre: string
   apellido: string
+  correo: string | null
   estado: boolean
 }
 
@@ -19,19 +20,9 @@ export interface SucursalConAdmin extends Sucursal {
   administrador: AdminSucursal | null
 }
 
-export type { SucursalFormValues } from '@/schemas/sucursal.schema'
-
 export interface SucursalFiltros {
   busqueda: string
   estado: 'todos' | 'activo' | 'inactivo'
 }
 
-export interface UsuarioDisponible {
-  id: string
-  nombre: string
-  apellido: string
-  estado: boolean
-  rol: {
-    nombre: string
-  }
-}
+export type { AsignarAdminFormValues, SucursalFormValues } from '@/schemas/sucursal.schema'
