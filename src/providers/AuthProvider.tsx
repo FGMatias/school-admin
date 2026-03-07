@@ -92,7 +92,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       password,
     })
 
-    if (error) throw error
+    if (error) {
+      console.log(error)
+      throw error
+    }
   }
 
   const logout = async () => {

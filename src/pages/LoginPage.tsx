@@ -33,7 +33,8 @@ export function LoginPage() {
 
     try {
       await login(email, password)
-    } catch {
+    } catch (err) {
+      console.log(err)
       setError('Correo o contraseña incorrectos')
     } finally {
       setLoading(false)
