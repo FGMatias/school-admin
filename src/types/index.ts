@@ -5,5 +5,4 @@ export type {
   SucursalConAdmin,
   SucursalFiltros,
   SucursalFormValues,
-  UsuarioDisponible,
 } from './sucursal.types'
