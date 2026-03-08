@@ -1,12 +1,11 @@
-import { supabase } from '@/lib/supabase'
-import { PeriodoAcademico, PeriodoFormValues } from '@/types/periodo.types'
+import { useAuth } from '@/hooks/useAuth'
+import { periodoService } from '@/services/periodo.service'
+import type { PeriodoFormValues } from '@/types/periodo.types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '../useAuth'
 
 const KEYS = {
   all: ['periodos'] as const,
   list: (idColegio: number) => [...KEYS.all, 'list', idColegio] as const,
-  detail: (id: number) => [...KEYS.all, 'detail', id] as const,
 }
 
 export function usePeriodo() {
@@ -15,18 +14,7 @@ export function usePeriodo() {
 
   return useQuery({
     queryKey: KEYS.list(idColegio),
-    queryFn: async (): Promise<PeriodoAcademico[]> => {
-      const { data, error } = await supabase
-        .from('periodo_academico')
-        .select('*')
-        .eq('id_colegio', idColegio)
-        .order('anio', { ascending: false })
-        .order('fecha_inicio', { ascending: false })
-
-      if (error) throw error
-
-      return data ?? []
-    },
+    queryFn: () => periodoService.listar(idColegio),
     enabled: idColegio > 0,
   })
 }
@@ -36,25 +24,13 @@ export function useCrearPeriodo() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (values: PeriodoFormValues) => {
-      const { data, error } = await supabase
-        .from('periodo_academico')
-        .insert({
-          id_colegio: usuario!.id_colegio,
-          nombre: values.nombre.trim(),
-          anio: values.anio,
-          fecha_inicio: values.fecha_inicio,
-          fecha_fin: values.fecha_fin,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data as PeriodoAcademico
+    mutationFn: ({ values }: { values: PeriodoFormValues }) => {
+      if (!usuario?.id_colegio) {
+        throw new Error('No se encontró el colegio del usuario activo')
+      }
+      return periodoService.crear(usuario.id_colegio, values)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.all })
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
   })
 }
 
@@ -62,27 +38,9 @@ export function useEditarPeriodo() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, values }: { id: number; values: PeriodoFormValues }) => {
-      const { data, error } = await supabase
-        .from('periodo_academico')
-        .update({
-          nombre: values.nombre.trim(),
-          anio: values.anio,
-          fecha_inicio: values.fecha_inicio,
-          fecha_fin: values.fecha_fin,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      return data as PeriodoAcademico
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.all })
-    },
+    mutationFn: ({ id, values }: { id: number; values: PeriodoFormValues }) =>
+      periodoService.editar(id, values),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
   })
 }
 
@@ -90,16 +48,8 @@ export function useToggleEstadoPeriodo() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, estado }: { id: number; estado: boolean }) => {
-      const { error } = await supabase
-        .from('periodo_academico')
-        .update({ estado, updated_at: new Date().toISOString() })
-        .eq('id', id)
-
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.all })
-    },
+    mutationFn: ({ id, estado }: { id: number; estado: boolean }) =>
+      periodoService.cambiarEstado(id, estado),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
   })
 }
