@@ -18,7 +18,6 @@ export function LoginPage() {
   const { login, usuario } = useAuth()
 
   if (usuario) {
-    console.log({ usuario })
     const to =
       usuario.rol.nombre === ROLES.ADMIN_EMPRESA
         ? ROUTES.EMPRESA.DASHBOARD
