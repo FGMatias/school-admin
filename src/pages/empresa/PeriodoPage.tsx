@@ -2,27 +2,42 @@ import { PeriodoForm, PeriodoTable, VerDetallePeriodoModal } from '@/components/
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   useCrearPeriodo,
   useEditarPeriodo,
-  usePeriodo,
+  usePeriodos,
   useToggleEstadoPeriodo,
 } from '@/hooks/queries/usePeriodo'
-import type { PeriodoAcademico, PeriodoFormValues } from '@/types/periodo.types'
-import { CalendarDays, Loader2, Plus } from 'lucide-react'
+import type { PeriodoFormValues } from '@/schemas/periodo.schema'
+import type { PeriodoAcademico } from '@/types/periodo.types'
+import { CalendarDays, Eye, Loader2, Pencil, Plus, Power } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
-export default function PeriodosPage() {
-  const { data: periodos = [], isLoading, isError } = usePeriodo()
+export function PeriodosPage() {
+  const { data: periodos = [], isLoading, isError } = usePeriodos()
   const crearPeriodo = useCrearPeriodo()
   const editarPeriodo = useEditarPeriodo()
-  const toggleEstado = useToggleEstadoPeriodo()
+  const cambiarEstado = useToggleEstadoPeriodo()
   const [formOpen, setFormOpen] = useState(false)
   const [periodoEditar, setPeriodoEditar] = useState<PeriodoAcademico | null>(null)
   const [detalleOpen, setDetalleOpen] = useState(false)
   const [periodoDetalle, setPeriodoDetalle] = useState<PeriodoAcademico | null>(null)
   const [confirmToggle, setConfirmToggle] = useState<PeriodoAcademico | null>(null)
+
+  const [estadoFiltro, setEstadoFiltro] = useState<string>('todos')
+
+  const periodosFiltrados =
+    estadoFiltro === 'todos'
+      ? periodos
+      : periodos.filter((p) => (estadoFiltro === 'activo' ? p.estado : !p.estado))
 
   const handleCrear = () => {
     setPeriodoEditar(null)
@@ -34,38 +49,29 @@ export default function PeriodosPage() {
     setFormOpen(true)
   }
 
-  const handleFormSubmit = async (values: PeriodoFormValues) => {
-    try {
-      if (periodoEditar) {
-        await editarPeriodo.mutateAsync({ id: periodoEditar.id, values })
-        toast.success('Periodo actualizado correctamente')
-      } else {
-        await crearPeriodo.mutateAsync(values)
-        toast.success('Periodo creado correctamente')
-      }
-      setFormOpen(false)
-    } catch {
-      toast.error('Ocurrió un error. Intenta nuevamente.')
+  const handleDetalle = (periodo: PeriodoAcademico) => {
+    setPeriodoDetalle(periodo)
+    setDetalleOpen(true)
+  }
+
+  const handleFormSubmit = (values: PeriodoFormValues) => {
+    if (periodoEditar) {
+      editarPeriodo.mutate(
+        { id: periodoEditar.id, values },
+        { onSuccess: () => setFormOpen(false) },
+      )
+    } else {
+      crearPeriodo.mutate({ values }, { onSuccess: () => setFormOpen(false) })
     }
   }
 
-  const confirmarToggle = async () => {
+  const confirmarToggle = () => {
     if (!confirmToggle) return
-    try {
-      await toggleEstado.mutateAsync({
-        id: confirmToggle.id,
-        estado: !confirmToggle.estado,
-      })
-      toast.success(
-        confirmToggle.estado
-          ? `"${confirmToggle.nombre}" inhabilitado`
-          : `"${confirmToggle.nombre}" habilitado`,
-      )
-    } catch {
-      toast.error('Error al cambiar el estado')
-    } finally {
-      setConfirmToggle(null)
-    }
+
+    cambiarEstado.mutate(
+      { id: confirmToggle.id, estado: !confirmToggle.estado },
+      { onSuccess: () => setConfirmToggle(null) },
+    )
   }
 
   if (isLoading) {
@@ -101,13 +107,34 @@ export default function PeriodosPage() {
       />
 
       <PeriodoTable
-        data={periodos}
-        onEditar={handleEditar}
-        onToggleEstado={setConfirmToggle}
-        onVerDetalle={(p) => {
-          setPeriodoDetalle(p)
-          setDetalleOpen(true)
-        }}
+        data={periodosFiltrados}
+        isLoading={isLoading}
+        filterSlot={
+          <Select value={estadoFiltro} onValueChange={setEstadoFiltro}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="activo">Activo</SelectItem>
+              <SelectItem value="inactivo">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+        renderActions={(periodo) => (
+          <>
+            <DropdownMenuItem onClick={() => handleDetalle(periodo)}>
+              <Eye className="mr-2 size-4" /> Ver Detalles
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleEditar(periodo)}>
+              <Pencil className="mr-2 size-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setConfirmToggle(periodo)}>
+              <Power className="mr-2 size-4" /> {periodo.estado ? 'Inhabilitar' : 'Habilitar'}
+            </DropdownMenuItem>
+          </>
+        )}
       />
 
       <PeriodoForm

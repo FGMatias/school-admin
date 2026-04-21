@@ -92,7 +92,9 @@ export function PeriodoForm({
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre *</FormLabel>
+                  <FormLabel>
+                    Nombre <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Ej. Primer Semestre 2024" autoFocus {...field} />
                   </FormControl>

@@ -1,5 +1,7 @@
+import { periodoAdapter } from '@/adapters/periodo.adapter'
 import { supabase } from '@/lib/supabase'
-import type { PeriodoAcademico, PeriodoFormValues } from '@/types/periodo.types'
+import type { PeriodoFormValues } from '@/schemas/periodo.schema'
+import type { PeriodoAcademico } from '@/types/periodo.types'
 
 export const periodoService = {
   listar: async (idColegio: number): Promise<PeriodoAcademico[]> => {
@@ -11,42 +13,34 @@ export const periodoService = {
       .order('fecha_inicio', { ascending: false })
 
     if (error) throw error
-    return data ?? []
+    if (!data) return []
+
+    return data.map(periodoAdapter.toApp)
   },
 
   crear: async (idColegio: number, values: PeriodoFormValues): Promise<PeriodoAcademico> => {
+    const payload = periodoAdapter.toInsert(idColegio, values)
     const { data, error } = await supabase
       .from('periodo_academico')
-      .insert({
-        id_colegio: idColegio,
-        nombre: values.nombre.trim(),
-        anio: values.anio,
-        fecha_inicio: values.fecha_inicio,
-        fecha_fin: values.fecha_fin,
-      })
+      .insert(payload)
       .select()
       .single()
 
     if (error) throw error
-    return data as PeriodoAcademico
+    return periodoAdapter.toApp(data)
   },
 
   editar: async (id: number, values: PeriodoFormValues): Promise<PeriodoAcademico> => {
+    const payload = periodoAdapter.toUpdate(values)
     const { data, error } = await supabase
       .from('periodo_academico')
-      .update({
-        nombre: values.nombre.trim(),
-        anio: values.anio,
-        fecha_inicio: values.fecha_inicio,
-        fecha_fin: values.fecha_fin,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', id)
       .select()
       .single()
 
     if (error) throw error
-    return data as PeriodoAcademico
+    return periodoAdapter.toApp(data)
   },
 
   cambiarEstado: async (id: number, estado: boolean): Promise<void> => {
