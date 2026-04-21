@@ -1,120 +1,143 @@
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type SortingState,
 } from '@tanstack/react-table'
+import { Search } from 'lucide-react'
+import React, { useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 
-interface DataTableProps<TData> {
-  columns: ColumnDef<TData, unknown>[]
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  isLoading?: boolean
+  searchPlaceholder?: string
   pageSize?: number
+  filterSlot?: React.ReactNode
   emptyMessage?: string
-  entityName?: string
 }
 
-export function DataTable<TData>({
+export function DataTable<TData, TValue>({
   columns,
   data,
-  pageSize = 5,
-  emptyMessage = 'No hay registros',
-  entityName = 'registros',
-}: DataTableProps<TData>) {
+  isLoading = false,
+  searchPlaceholder = 'Buscar...',
+  pageSize = 10,
+  filterSlot,
+  emptyMessage = 'No se encontraron resultados.',
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = useState('')
+
   const table = useReactTable({
     data,
     columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    autoResetPageIndex: true,
-    initialState: {
-      pagination: { pageSize },
-    },
+    getSortedRowModel: getSortedRowModel(),
+    initialState: { pagination: { pageSize } },
   })
 
-  const paginaActual = table.getState().pagination.pageIndex
-  const totalPaginas = table.getPageCount()
-  const totalRegistros = data.length
-  const desde = totalRegistros > 0 ? paginaActual * pageSize + 1 : 0
-  const hasta = Math.min((paginaActual + 1) * pageSize, totalRegistros)
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full max-w-sm" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((hg) => (
-            <TableRow key={hg.id}>
-              {hg.headers.map((header) => (
-                <TableHead key={header.id} className="px-6">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length > 0 ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="px-6">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-sm flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            placeholder={searchPlaceholder}
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        {filterSlot && <div className="flex items-center gap-3">{filterSlot}</div>}
+      </div>
+
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                {emptyMessage}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      {totalRegistros > 0 && (
-        <div className="flex items-center justify-between border-t px-6 py-4">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {desde} a {hasta} de {totalRegistros} {entityName}
-          </p>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Anterior
-            </Button>
-
-            {Array.from({ length: totalPaginas }, (_, i) => (
-              <Button
-                key={i}
-                variant={paginaActual === i ? 'default' : 'outline'}
-                size="sm"
-                className="size-8 p-0"
-                onClick={() => table.setPageIndex(i)}
-              >
-                {i + 1}
-              </Button>
             ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-muted-foreground h-24 text-center"
+                >
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Siguiente
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">
+          Mostrando {table.getRowModel().rows.length} de {table.getFilteredRowModel().rows.length}{' '}
+          registros
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Anterior
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Siguiente
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   )
 }

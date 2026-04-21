@@ -1,7 +1,3 @@
-import { ChevronsUpDown, Loader2, LogOut } from 'lucide-react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -25,6 +21,9 @@ import {
 } from '@/components/ui/sidebar'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
+import { ChevronsUpDown, Loader2, LogOut } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { NavMain } from './NavMain'
 import { empresaNav } from './sidebar-nav'
 
@@ -32,11 +31,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
-
   const colegioNombre = usuario?.colegio.nombre ?? 'School Admin'
   const colegioInicial = colegioNombre.charAt(0).toUpperCase()
   const usuarioNombre = usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'
-  const rolLabel = usuario?.rol.nombre === 'ADMIN_EMPRESA' ? 'Administrador' : 'Admin Sucursal'
+  const rolLabel = usuario?.rol.nombre ?? 'Administrador'
+
+  console.log({ usuario })
 
   const handleLogout = async () => {
     if (loggingOut) return
