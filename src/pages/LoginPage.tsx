@@ -1,224 +1,161 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ROLES } from '@/constants/roles'
-import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
-import { BarChart3, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { AuthFormData, authSchema } from '@/schemas/auth.schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [authError, setAuthError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, usuario } = useAuth()
+  const navigate = useNavigate()
 
-  if (usuario) {
-    const to =
-      usuario.rol.nombre === ROLES.ADMIN_EMPRESA
-        ? ROUTES.EMPRESA.DASHBOARD
-        : ROUTES.SUCURSAL.DASHBOARD
-    return <Navigate to={to} replace />
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  useEffect(() => {
+    if (usuario) {
+      navigate('/', { replace: true })
+    }
+  }, [usuario, navigate])
+
+  const onSubmit = async (data: AuthFormData) => {
+    setAuthError('')
     setLoading(true)
 
     try {
-      await login(email, password)
+      await login(data.email, data.password)
+      navigate('/', { replace: true })
     } catch (err) {
-      console.log(err)
-      setError('Correo o contraseña incorrectos')
+      console.error(err)
+      setAuthError('Correo o contraseña incorrectos')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-sa-background">
-      <div className="relative z-20 flex h-full w-full flex-col bg-white shadow-xl lg:w-1/2 lg:shadow-none">
-        <div className="flex min-h-0 flex-1 items-center justify-center px-8 lg:px-12 xl:px-16">
-          <Card className="w-full max-w-md border-none bg-transparent shadow-none">
-            <CardContent className="space-y-7 p-0">
-              <div>
-                <h2 className="font-display mb-3 text-3xl font-bold tracking-tight text-slate-900">
-                  Bienvenido de nuevo
-                </h2>
-                <p className="leading-relaxed text-muted-foreground">
-                  Ingresa tus credenciales para acceder al panel de administración.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    {error}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold text-slate-700">
-                    Correo Electrónico
-                  </Label>
-                  <div className="group relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 transition-colors group-focus-within:text-sa-primary">
-                      <Mail size={18} />
-                    </div>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm shadow-sm placeholder:text-slate-400 focus:border-sa-primary focus:bg-white focus:ring-sa-primary/10"
-                      placeholder="admin@schooladmin.edu"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-semibold text-slate-700">
-                    Contraseña
-                  </Label>
-                  <div className="group relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 transition-colors group-focus-within:text-sa-primary">
-                      <Lock size={18} />
-                    </div>
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-11 text-sm shadow-sm placeholder:text-slate-400 focus:border-sa-primary focus:bg-white focus:ring-sa-primary/10"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-sa-primary focus:ring-sa-primary/20"
-                    />
-                    <Label
-                      htmlFor="remember-me"
-                      className="cursor-pointer text-sm font-normal text-slate-600"
-                    >
-                      Recordarme
-                    </Label>
-                  </div>
-                  <a
-                    href="#"
-                    className="text-sm font-medium text-sa-primary transition-colors hover:text-sa-primary-dark"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </a>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-sa-primary to-sa-primary-dark text-sm font-bold tracking-wide shadow-lg shadow-sa-primary/25 transition-all duration-300 hover:-translate-y-0.5 hover:from-sa-primary-dark hover:to-sa-primary-dark disabled:hover:translate-y-0"
-                >
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : 'INICIAR SESIÓN'}
-                </Button>
-              </form>
-
-              <p className="text-center text-sm text-muted-foreground">
-                ¿No tienes una cuenta administrativa?{' '}
-                <a
-                  href="#"
-                  className="font-medium text-slate-800 transition-colors hover:text-sa-primary"
-                >
-                  Contactar a Soporte TI
-                </a>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex-none px-8 pb-6 lg:px-12 lg:pb-8 xl:px-16 xl:pb-10">
-          <div className="flex items-center justify-between border-t border-slate-100 pt-5 text-xs text-slate-400">
-            <span>© {new Date().getFullYear()} School Admin</span>
-            <div className="flex gap-4">
-              <a href="#" className="transition-colors hover:text-slate-600">
-                Soporte
-              </a>
-              <a href="#" className="transition-colors hover:text-slate-600">
-                Privacidad
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:block">
-        <div
-          className="absolute inset-0 scale-105 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop')",
-            filter: 'grayscale(30%)',
-          }}
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-sa-primary-dark/90 to-slate-900/80 mix-blend-multiply" />
-
-        <div className="absolute inset-0 bg-sa-pattern opacity-20" />
-
-        <div className="absolute right-0 top-0 p-20 opacity-10">
-          <svg width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="2" fill="white" />
-            <circle cx="40" cy="60" r="2" fill="white" />
-            <circle cx="160" cy="80" r="2" fill="white" />
-            <circle cx="80" cy="150" r="2" fill="white" />
-            <line x1="100" y1="100" x2="40" y2="60" stroke="white" strokeWidth="0.5" />
-            <line x1="100" y1="100" x2="160" y2="80" stroke="white" strokeWidth="0.5" />
-            <line x1="100" y1="100" x2="80" y2="150" stroke="white" strokeWidth="0.5" />
-            <line x1="40" y1="60" x2="80" y2="150" stroke="white" strokeWidth="0.5" />
-          </svg>
-        </div>
-
-        <div className="absolute inset-0 z-10 flex flex-col justify-center px-20 text-white">
-          <div className="border-l-4 border-sa-primary py-2 pl-8">
-            <h2 className="font-display mb-6 text-5xl font-bold leading-tight tracking-tight">
-              Gestión Institucional <br />
-              <span className="bg-gradient-to-r from-blue-200 to-white bg-clip-text text-transparent">
-                Inteligente
-              </span>
-            </h2>
-            <p className="max-w-lg text-lg font-light leading-relaxed text-slate-300">
-              Plataforma integral para la administración académica, financiera y operativa.
-              Centralice sus datos y tome decisiones informadas con School Admin.
+    <div className="container relative hidden min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="lg:p-8">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
+          <div className="flex flex-col space-y-2 text-center">
+            <h1 className="text-3xl font-semibold tracking-tight">Bienvenido de nuevo</h1>
+            <p className="text-sm text-muted-foreground">
+              Ingresa tus credenciales para acceder al panel.
             </p>
           </div>
 
-          <div className="mt-12 flex items-center gap-8 text-sm font-medium text-slate-300/80">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={20} className="text-blue-300" />
-              <span>Seguridad Avanzada</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {authError && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm font-medium text-destructive">
+                {authError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="admin@schooladmin.edu"
+                    className="pl-9"
+                    {...register('email')}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm font-medium text-destructive">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="pl-9 pr-10"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm font-medium text-destructive">{errors.password.message}</p>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <BarChart3 size={20} className="text-blue-300" />
-              <span>Reportes en Tiempo Real</span>
+
+            <div className="flex items-center justify-between">
+              <a href="#" className="text-sm font-medium text-primary hover:underline">
+                ¿Olvidaste tu contraseña?
+              </a>
             </div>
-          </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+
+          <p className="px-8 text-center text-sm text-muted-foreground">
+            ¿Problemas para acceder?{' '}
+            <a href="#" className="underline underline-offset-4 hover:text-primary">
+              Contactar a Soporte TI
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-l">
+        <div className="absolute inset-0 bg-slate-900" />
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop')",
+          }}
+        />
+
+        <div className="relative z-20 flex items-center text-lg font-medium">
+          <ShieldCheck className="mr-2 h-6 w-6" />
+          School Admin
+        </div>
+
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-4">
+            <p className="text-2xl font-medium leading-relaxed">
+              &ldquo;Gestión institucional inteligente. Plataforma integral para la administración
+              académica, financiera y operativa.&rdquo;
+            </p>
+            <footer className="text-sm text-slate-300">
+              Centralice sus datos y tome decisiones informadas de manera segura.
+            </footer>
+          </blockquote>
         </div>
       </div>
     </div>
