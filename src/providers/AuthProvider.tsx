@@ -1,6 +1,7 @@
+import { usuarioAdapter, UsuarioResponse } from '@/adapters/usuario.adapter'
 import { AuthContext } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import type { Usuario } from '@/types'
+import type { UsuarioAutenticado } from '@/types/usuario.types'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface AuthProviderProps {
@@ -8,12 +9,12 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const initializeRef = useRef(false)
 
-  const fetchUsuario = async (authId: string): Promise<Usuario> => {
+  const fetchUsuario = async (authId: string): Promise<UsuarioAutenticado> => {
     const { data, error } = await supabase
       .from('usuario')
       .select(
@@ -22,19 +23,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         rol (*),
         colegio (*),
         usuario_sucursal (
-            id_sucursal,
-            sucursal (id, nombre)
+          sucursal (*)
         )
-        `,
+      `,
       )
       .eq('id_auth', authId)
       .single()
 
     if (error) throw error
-
     if (!data) throw new Error(`No se encontró usuario para id_auth: ${authId}`)
 
-    return data as Usuario
+    return usuarioAdapter.toApp(data as unknown as UsuarioResponse)
   }
 
   useEffect(() => {
