@@ -1,10 +1,7 @@
+import { sucursalAdapter, type SucursalRpcResponse } from '@/adapters/sucursal.adapter'
 import { supabase } from '@/lib/supabase'
-import {
-  AsignarAdminFormValues,
-  Sucursal,
-  SucursalConAdmin,
-  SucursalFormValues,
-} from '@/types/sucursal.types'
+import type { AsignarAdminFormValues, SucursalFormValues } from '@/schemas/sucursal.schema'
+import { Sucursal, SucursalConAdmin } from '@/types/sucursal.types'
 
 export const sucursalService = {
   listar: async (idColegio: number): Promise<SucursalConAdmin[]> => {
@@ -15,49 +12,22 @@ export const sucursalService = {
     if (error) throw error
     if (!data) return []
 
-    return (data as any[]).map((row) => ({
-      id: row.id,
-      id_colegio: row.id_colegio,
-      nombre: row.nombre,
-      direccion: row.direccion,
-      estado: row.estado,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      administrador: row.admin_id
-        ? {
-            id: row.admin_id,
-            nombre: row.admin_nombre,
-            apellido: row.admin_apellido,
-            estado: row.admin_estado,
-            correo: row.admin_correo ?? null,
-          }
-        : null,
-    }))
+    return (data as unknown as SucursalRpcResponse[]).map(sucursalAdapter.toApp)
   },
 
   crear: async (idColegio: number, values: SucursalFormValues): Promise<Sucursal> => {
-    const { data, error } = await supabase
-      .from('sucursal')
-      .insert({
-        id_colegio: idColegio,
-        nombre: values.nombre.trim(),
-        direccion: values.direccion.trim() || null,
-      })
-      .select()
-      .single()
+    const payload = sucursalAdapter.toCreate(idColegio, values)
+    const { data, error } = await supabase.from('sucursal').insert(payload).select().single()
 
     if (error) throw error
     return data
   },
 
   editar: async (id: number, values: SucursalFormValues): Promise<Sucursal> => {
+    const payload = sucursalAdapter.toUpdate(values)
     const { data, error } = await supabase
       .from('sucursal')
-      .update({
-        nombre: values.nombre.trim(),
-        direccion: values.direccion.trim() || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('id', id)
       .select()
       .single()
@@ -81,13 +51,8 @@ export const sucursalService = {
     idColegio: number,
     values: AsignarAdminFormValues,
   ): Promise<void> => {
-    const { error } = await supabase.rpc('crear_admin_sucursal', {
-      p_id_sucursal: idSucursal,
-      p_id_colegio: idColegio,
-      p_nombre: values.nombre.trim(),
-      p_apellido: values.apellido.trim(),
-      p_correo: values.correo.trim().toLowerCase(),
-    })
+    const payload = sucursalAdapter.toAssignAdmin(idSucursal, idColegio, values)
+    const { error } = await supabase.rpc('crear_admin_sucursal', payload)
 
     if (error) throw error
   },

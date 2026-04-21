@@ -1,7 +1,3 @@
-import { Building2, Loader2, Plus } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
-
 import {
   AsignarAdminModal,
   SucursalForm,
@@ -12,26 +8,33 @@ import {
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   useCrearAdminSucursal,
   useCrearSucursal,
   useEditarSucursal,
   useResetPasswordAdmin,
-  useSucursal,
+  useSucursales,
   useToggleEstadoSucursal,
 } from '@/hooks/queries/useSucursal'
-import type {
-  AsignarAdminFormValues,
-  SucursalConAdmin,
-  SucursalFormValues,
-} from '@/types/sucursal.types'
+import type { AsignarAdminFormValues, SucursalFormValues } from '@/schemas/sucursal.schema'
+import type { SucursalConAdmin } from '@/types/sucursal.types'
+import { Building2, Eye, Loader2, Pencil, Plus, Power, UserPlus, Users } from 'lucide-react'
+import { useState } from 'react'
 
-export default function SucursalesPage() {
-  const { data: sucursales = [], isLoading, isError } = useSucursal()
+export function SucursalPage() {
+  const { data: sucursales = [], isLoading, isError } = useSucursales()
   const crearSucursal = useCrearSucursal()
   const editarSucursal = useEditarSucursal()
-  const toggleEstado = useToggleEstadoSucursal()
-  const crearAdmin = useCrearAdminSucursal()
+  const cambiarEstado = useToggleEstadoSucursal()
+  const crearAdminSucursal = useCrearAdminSucursal()
   const resetPassword = useResetPasswordAdmin()
   const [formOpen, setFormOpen] = useState(false)
   const [sucursalEditar, setSucursalEditar] = useState<SucursalConAdmin | null>(null)
@@ -41,8 +44,13 @@ export default function SucursalesPage() {
   const [adminParaVer, setAdminParaVer] = useState<SucursalConAdmin | null>(null)
   const [detalleOpen, setDetalleOpen] = useState(false)
   const [sucursalDetalle, setSucursalDetalle] = useState<SucursalConAdmin | null>(null)
-
   const [confirmToggle, setConfirmToggle] = useState<SucursalConAdmin | null>(null)
+  const [estadoFiltro, setEstadoFiltro] = useState<string>('todos')
+
+  const sucursalesFiltradas =
+    estadoFiltro === 'todos'
+      ? sucursales
+      : sucursales.filter((s) => (estadoFiltro === 'activo' ? s.estado : !s.estado))
 
   const handleCrear = () => {
     setSucursalEditar(null)
@@ -54,38 +62,28 @@ export default function SucursalesPage() {
     setFormOpen(true)
   }
 
-  const handleFormSubmit = async (values: SucursalFormValues) => {
-    try {
-      if (sucursalEditar) {
-        await editarSucursal.mutateAsync({ id: sucursalEditar.id, values })
-        toast.success('Sucursal actualizada correctamente')
-      } else {
-        await crearSucursal.mutateAsync(values)
-        toast.success('Sucursal creada correctamente')
-      }
-      setFormOpen(false)
-    } catch {
-      toast.error('Ocurrió un error. Intenta nuevamente.')
+  const handleVerDetalle = (sucursal: SucursalConAdmin) => {
+    setSucursalDetalle(sucursal)
+    setDetalleOpen(true)
+  }
+
+  const handleFormSubmit = (values: SucursalFormValues) => {
+    if (sucursalEditar) {
+      editarSucursal.mutate(
+        { id: sucursalEditar.id, values },
+        { onSuccess: () => setFormOpen(false) },
+      )
+    } else {
+      crearSucursal.mutate({ values }, { onSuccess: () => setFormOpen(false) })
     }
   }
 
-  const confirmarToggle = async () => {
+  const confirmarToggle = () => {
     if (!confirmToggle) return
-    try {
-      await toggleEstado.mutateAsync({
-        id: confirmToggle.id,
-        estado: !confirmToggle.estado,
-      })
-      toast.success(
-        confirmToggle.estado
-          ? `"${confirmToggle.nombre}" inhabilitada`
-          : `"${confirmToggle.nombre}" habilitada`,
-      )
-    } catch {
-      toast.error('Error al cambiar el estado')
-    } finally {
-      setConfirmToggle(null)
-    }
+    cambiarEstado.mutate(
+      { id: confirmToggle.id, estado: !confirmToggle.estado },
+      { onSuccess: () => setConfirmToggle(null) },
+    )
   }
 
   const handleAsignarAdmin = (sucursal: SucursalConAdmin) => {
@@ -98,34 +96,16 @@ export default function SucursalesPage() {
     }
   }
 
-  const handleAsignarAdminSubmit = async (values: AsignarAdminFormValues) => {
+  const handleAsignarAdminSubmit = (values: AsignarAdminFormValues) => {
     if (!sucursalParaAdmin) return
-    try {
-      await crearAdmin.mutateAsync({
-        idSucursal: sucursalParaAdmin.id,
-        values,
-      })
-      setAsignarAdminOpen(false)
-      toast.success(
-        `${values.nombre} ${values.apellido} asignado como administrador de "${sucursalParaAdmin.nombre}". La contraseña por defecto es: admin123!`,
-      )
-    } catch (err: any) {
-      const msg = err?.message ?? ''
-      if (msg.includes('ya está registrado')) {
-        toast.error(`El correo ${values.correo} ya está registrado en el sistema`)
-      } else {
-        toast.error('Error al crear el administrador')
-      }
-    }
+    crearAdminSucursal.mutate(
+      { idSucursal: sucursalParaAdmin.id, values },
+      { onSuccess: () => setAsignarAdminOpen(false) },
+    )
   }
 
-  const handleResetPassword = async (idUsuario: string) => {
-    try {
-      await resetPassword.mutateAsync(idUsuario)
-      toast.success('Contraseña restablecida a: admin123!')
-    } catch {
-      toast.error('Error al restablecer la contraseña')
-    }
+  const handleResetPassword = (idUsuario: string) => {
+    resetPassword.mutate({ idUsuario })
   }
 
   if (isLoading) {
@@ -161,14 +141,45 @@ export default function SucursalesPage() {
       />
 
       <SucursalTable
-        data={sucursales}
-        onEditar={handleEditar}
-        onToggleEstado={setConfirmToggle}
-        onAsignarAdmin={handleAsignarAdmin}
-        onVerDetalle={(s) => {
-          setSucursalDetalle(s)
-          setDetalleOpen(true)
-        }}
+        data={sucursalesFiltradas}
+        isLoading={isLoading}
+        filterSlot={
+          <Select value={estadoFiltro} onValueChange={setEstadoFiltro}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="activo">Activo</SelectItem>
+              <SelectItem value="inactivo">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+        renderActions={(sucursal) => (
+          <>
+            <DropdownMenuItem onClick={() => handleVerDetalle(sucursal)}>
+              <Eye className="mr-2 size-4" /> Ver Detalles
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleEditar(sucursal)}>
+              <Pencil className="mr-2 size-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setConfirmToggle(sucursal)}>
+              <Power className="mr-2 size-4" /> {sucursal.estado ? 'Inhabilitar' : 'Habilitar'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleAsignarAdmin(sucursal)}>
+              {sucursal.administrador ? (
+                <>
+                  <Users className="mr-2 size-4" /> Ver Administrador
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 size-4" /> Asignar Administrador
+                </>
+              )}
+            </DropdownMenuItem>
+          </>
+        )}
       />
 
       <SucursalForm
@@ -183,11 +194,11 @@ export default function SucursalesPage() {
         open={asignarAdminOpen}
         onOpenChange={setAsignarAdminOpen}
         onSubmit={handleAsignarAdminSubmit}
-        isPending={crearAdmin.isPending}
+        isPending={crearAdminSucursal.isPending}
       />
 
       <VerAdminModal
-        open={verAdminOpen}
+        open={!!verAdminOpen}
         onOpenChange={setVerAdminOpen}
         admin={adminParaVer?.administrador ?? null}
         onResetPassword={handleResetPassword}
