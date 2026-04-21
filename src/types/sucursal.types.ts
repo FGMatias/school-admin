@@ -1,3 +1,5 @@
+import { AdminSucursal } from './usuario.types'
+
 export interface Sucursal {
   id: number
   id_colegio: number
@@ -8,21 +10,6 @@ export interface Sucursal {
   updated_at: string
 }
 
-export interface AdminSucursal {
-  id: string
-  nombre: string
-  apellido: string
-  correo: string | null
-  estado: boolean
-}
-
 export interface SucursalConAdmin extends Sucursal {
   administrador: AdminSucursal | null
 }
-
-export interface SucursalFiltros {
-  busqueda: string
-  estado: 'todos' | 'activo' | 'inactivo'
-}
-
-export type { AsignarAdminFormValues, SucursalFormValues } from '@/schemas/sucursal.schema'

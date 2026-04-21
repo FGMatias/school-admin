@@ -9,10 +9,3 @@ export interface PeriodoAcademico {
   created_at: string
   updated_at: string
 }
-
-export interface PeriodoFiltros {
-  busqueda: string
-  estado: 'todos' | 'activo' | 'inactivo'
-}
-
-export type { PeriodoFormValues } from '@/schemas/periodo.schema'

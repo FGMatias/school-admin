@@ -1,6 +1,6 @@
 export const ROLES = {
-  ADMIN_EMPRESA: 'ADMIN_EMPRESA',
-  ADMIN_SUCURSAL: 'ADMIN_SUCURSAL',
+  ADMIN_EMPRESA: 1,
+  ADMIN_SUCURSAL: 2,
 } as const
 
-export type RolUsuario = (typeof ROLES)[keyof typeof ROLES]
+export type RolUsuarioId = (typeof ROLES)[keyof typeof ROLES]
