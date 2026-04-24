@@ -1,5 +1,5 @@
 import { DataTable } from '@/components/shared/DataTable'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -70,16 +70,7 @@ export function SucursalTable({ data, isLoading, renderActions, filterSlot }: Su
       {
         accessorKey: 'estado',
         header: 'Estado',
-        cell: ({ row }) => (
-          <Badge variant={row.original.estado ? 'default' : 'secondary'}>
-            <span
-              className={`mr-1.5 inline-block size-1.5 rounded-full ${
-                row.original.estado ? 'bg-emerald-400' : 'bg-gray-400'
-              }`}
-            />
-            {row.original.estado ? 'Activa' : 'Inactiva'}
-          </Badge>
-        ),
+        cell: ({ getValue }) => <StatusBadge isActive={getValue() as boolean} />,
       },
     ]
 

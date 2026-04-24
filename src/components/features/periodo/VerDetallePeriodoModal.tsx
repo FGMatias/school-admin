@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,16 +8,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
+import { formatDate, formatDateTime } from '@/lib/utils'
 import { type PeriodoAcademico } from '@/types/periodo.types'
 import { CalendarDays, CalendarRange, Loader2 } from 'lucide-react'
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-}
 
 function getDuracionMeses(inicio: string, fin: string): number {
   const d1 = new Date(inicio)
@@ -59,12 +52,7 @@ export function VerDetallePeriodoModal({
                     <p className="text-base font-semibold">{periodo.nombre}</p>
                     <p className="text-sm text-muted-foreground">Año {periodo.anio}</p>
                   </div>
-                  <Badge variant={periodo.estado ? 'default' : 'secondary'}>
-                    <span
-                      className={`mr-1.5 inline-block size-1.5 rounded-full ${periodo.estado ? 'bg-emerald-400' : 'bg-gray-400'}`}
-                    />
-                    {periodo.estado ? 'Activa' : 'Inactiva'}
-                  </Badge>
+                  <StatusBadge isActive={periodo.estado as boolean} />
                 </div>
 
                 <Separator />
@@ -99,23 +87,11 @@ export function VerDetallePeriodoModal({
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm border-t pt-3">
                   <div>
                     <p className="text-muted-foreground">Creado</p>
-                    <p className="font-medium">
-                      {new Date(periodo.created_at).toLocaleDateString('es-PE', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    <p className="font-medium">{formatDateTime(periodo.created_at)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Última actualización</p>
-                    <p className="font-medium">
-                      {new Date(periodo.updated_at).toLocaleDateString('es-PE', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    <p className="font-medium">{formatDateTime(periodo.updated_at)}</p>
                   </div>
                 </div>
               </div>

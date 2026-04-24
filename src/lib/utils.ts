@@ -14,10 +14,23 @@ export function formatMoney(amount: number): string {
   })}`
 }
 
-export function formatDate(date: string | Date): string {
-  return format(new Date(date), 'dd/MM/yyyy', { locale: es })
+export function formatDate(
+  date: string | Date | undefined | null,
+  monthStyle: 'short' | 'long' = 'long',
+): string {
+  if (!date) return '---'
+
+  const dateObj =
+    typeof date === 'string' ? new Date(date.includes('T') ? date : `${date}T00:00:00`) : date
+
+  return format(dateObj, monthStyle === 'long' ? "dd 'de' MMMM 'de' yyyy" : 'dd MMM yyyy', {
+    locale: es,
+  })
 }
 
-export function formatDateTime(date: string | Date): string {
-  return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: es })
+export function formatDateTime(date: string | Date | undefined | null): string {
+  if (!date) return '---'
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+
+  return format(dateObj, 'dd/MM/yyyy HH:mm', { locale: es })
 }

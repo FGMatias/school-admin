@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
+import { formatDateTime } from '@/lib/utils'
 import type { SucursalConAdmin } from '@/types/sucursal.types'
 import { Building2, Loader2, Mail, MapPin, UserCircle } from 'lucide-react'
 
@@ -50,36 +51,17 @@ export function VerDetalleSucursalModal({
                       </div>
                     )}
                   </div>
-                  <Badge variant={sucursal.estado ? 'default' : 'secondary'}>
-                    <span
-                      className={`mr-1.5 inline-block size-1.5 rounded-full ${
-                        sucursal.estado ? 'bg-emerald-400' : 'bg-gray-400'
-                      }`}
-                    />
-                    {sucursal.estado ? 'Activa' : 'Inactiva'}
-                  </Badge>
+                  <StatusBadge isActive={sucursal.estado as boolean} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground">Creada</p>
-                    <p className="font-medium">
-                      {new Date(sucursal.created_at).toLocaleDateString('es-PE', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    <p className="font-medium">{formatDateTime(sucursal.created_at)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Última actualización</p>
-                    <p className="font-medium">
-                      {new Date(sucursal.updated_at).toLocaleDateString('es-PE', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    <p className="font-medium">{formatDateTime(sucursal.updated_at)}</p>
                   </div>
                 </div>
               </div>
