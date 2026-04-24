@@ -1,4 +1,5 @@
-import { GradoForm, GradoTable } from '@/components/features/grado'
+import { GradoForm, GradoTable, VerDetalleGradoModal } from '@/components/features/grado'
+import { GestionarSeccionesModal } from '@/components/features/grado/GestionarSeccionModal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,16 @@ import {
 } from '@/hooks/queries/useGrado'
 import type { GradoFormValues } from '@/schemas/grado.schema'
 import type { Grado } from '@/types/grado.types'
-import { Eye, GraduationCap, Loader2, Pencil, Plus, ShieldCheck, ShieldOff } from 'lucide-react'
+import {
+  Eye,
+  GraduationCap,
+  Layers,
+  Loader2,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  ShieldOff,
+} from 'lucide-react'
 import { useState } from 'react'
 
 export function GradoPage() {
@@ -30,6 +40,8 @@ export function GradoPage() {
   const [gradoSeleccionado, setGradoSeleccionado] = useState<Grado | null>(null)
   const [abrirDetalle, setAbrirDetalle] = useState(false)
   const [gradoDetalle, setGradoDetalle] = useState<Grado | null>(null)
+  const [abrirSecciones, setAbrirSecciones] = useState(false)
+  const [gradoSecciones, setGradoSecciones] = useState<Grado | null>(null)
   const [confirmToggle, setConfirmToggle] = useState<Grado | null>(null)
   const [estadoFiltro, setEstadoFiltro] = useState<string>('todos')
 
@@ -51,6 +63,11 @@ export function GradoPage() {
   const handleDetalle = (grado: Grado) => {
     setGradoDetalle(grado)
     setAbrirDetalle(true)
+  }
+
+  const handleGestionarSecciones = (grado: Grado) => {
+    setGradoSecciones(grado)
+    setAbrirSecciones(true)
   }
 
   const handleFormSubmit = (values: GradoFormValues) => {
@@ -129,6 +146,9 @@ export function GradoPage() {
             <DropdownMenuItem onClick={() => handleEditar(grado)}>
               <Pencil className="mr-2 size-4" /> Editar
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleGestionarSecciones(grado)}>
+              <Layers className="mr-2 size-4" /> Gestionar Secciones
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setConfirmToggle(grado)}>
               {grado.estado ? (
@@ -145,12 +165,24 @@ export function GradoPage() {
         )}
       />
 
+      <VerDetalleGradoModal
+        open={abrirDetalle}
+        onOpenChange={setAbrirDetalle}
+        grado={gradoDetalle}
+      />
+
       <GradoForm
         open={formOpen}
         onOpenChange={setFormOpen}
         grado={gradoSeleccionado}
         onSubmit={handleFormSubmit}
         isPending={crearGrado.isPending || editarGrado.isPending}
+      />
+
+      <GestionarSeccionesModal
+        open={abrirSecciones}
+        onOpenChange={setAbrirSecciones}
+        grado={gradoSecciones}
       />
 
       <ConfirmDialog

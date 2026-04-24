@@ -59,7 +59,7 @@ export function GradoForm({ open, onOpenChange, grado, onSubmit, isPending }: Gr
           <DialogTitle>{isEditing ? 'Editar Grado' : 'Crear Grado'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'Modifica losdatos del grado académico.'
+              ? 'Modifica los datos del grado académico.'
               : 'Ingresa los datos del nuevo grado académico.'}
           </DialogDescription>
         </DialogHeader>
