@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
+import { ConceptoPagoPage } from '@/pages/empresa/ConceptoPagoPage'
 import { DashboardEmpresaPage } from '@/pages/empresa/DashboardPage'
 import { GradoPage } from '@/pages/empresa/GradoPage'
 import { PeriodosPage } from '@/pages/empresa/PeriodoPage'
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
               { path: ROUTES.EMPRESA.GRADO, element: <GradoPage /> },
               { path: ROUTES.EMPRESA.PROFESOR, element: <Placeholder titulo="Profesores" /> },
               { path: ROUTES.EMPRESA.PAGO, element: <Placeholder titulo="Pagos" /> },
-              { path: ROUTES.EMPRESA.TARIFA, element: <Placeholder titulo="Tarifas" /> },
+              { path: ROUTES.EMPRESA.TARIFA, element: <ConceptoPagoPage /> },
               {
                 path: ROUTES.EMPRESA.REPORTE_ALUMNO,
                 element: <Placeholder titulo="Reporte de Alumnos" />,

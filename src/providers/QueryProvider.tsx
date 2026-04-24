@@ -11,6 +11,19 @@ const queryClient = new QueryClient({
     },
     mutations: {
       networkMode: 'always',
+      retry: (failureCount, error) => {
+        if (failureCount >= 1) return false
+
+        const message = (error as Error)?.message ?? ''
+        const isAuthError =
+          message.includes('JWT') ||
+          message.includes('401') ||
+          message.includes('token') ||
+          message.includes('expired')
+
+        return isAuthError
+      },
+      retryDelay: 1000,
     },
   },
 })
